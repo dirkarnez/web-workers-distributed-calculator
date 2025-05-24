@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Page Title</title>
+</head>
+<body>
+
+<script>
+// main.js
+const workerScript = `
+  onmessage = function(e) {
+    const numbers = e.data;
+    const sum = numbers.reduce((acc, val) => acc + val, 0);
+    postMessage(sum);
+  }
+`;
+
+const blob = new Blob([workerScript], { type: 'application/javascript' });
+const worker = new Worker(URL.createObjectURL(blob));
+
+const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const mid = Math.floor(numbers.length / 2);
+
+let results = [];
+let completedWorkers = 0;
+
+const onMessage = (e) => {
+  results.push(e.data);
+  completedWorkers++;
+  
+  if (completedWorkers === 2) {
+    const total = results.reduce((acc, val) => acc + val, 0);
+    console.log(results[0], results[1], total);
+    worker.terminate();
+  }
+};
+
+worker.onmessage = onMessage;
+
+// Create two workers for the two halves of the array
+worker.postMessage(numbers.slice(0, mid));
+const worker2 = new Worker(URL.createObjectURL(blob));
+worker2.onmessage = onMessage;
+worker2.postMessage(numbers.slice(mid));
+</script>
+
+
+</body>
+</html>
+
+
